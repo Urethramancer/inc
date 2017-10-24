@@ -62,35 +62,14 @@ import (
 	"path/filepath"
 )
 
-`
-
-	b.WriteString(header)
-	for _, f := range list {
-		_, err := b.Write(f.Data)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	vars := `var basePath = ""
+var basePath = ""
 
 // EmbeddedFileList gets the byte slices from original paths.
 type EmbeddedFileList map[string]*[]byte
 
 var embeddedFiles EmbeddedFileList
 
-func init() {
-	embeddedFiles = make(EmbeddedFileList)
-`
-
-	b.WriteString(vars)
-	for _, v := range list {
-		s := fmt.Sprintf("\tembeddedFiles[\"%s\"] = &%s\n", v.Name, v.Path)
-		b.WriteString(s)
-	}
-
-	footer := `}
-
+// SetBasePath sets the path prepended to file paths when checking for actual files.
 func SetBasePath(path string) {
 	basePath = path
 }
@@ -127,8 +106,24 @@ func GetData(path string) ([]byte, error) {
 
 	return out.Bytes(), nil
 }
+
+func init() {
+	embeddedFiles = make(EmbeddedFileList)
 `
 
-	b.WriteString(footer)
+	b.WriteString(header)
+	for _, v := range list {
+		s := fmt.Sprintf("\tembeddedFiles[\"%s\"] = &%s\n", v.Name, v.Path)
+		b.WriteString(s)
+	}
+	b.WriteString("}\n\n")
+
+	for _, f := range list {
+		_, err := b.Write(f.Data)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	return b.String(), nil
 }
