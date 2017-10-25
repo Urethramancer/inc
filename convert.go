@@ -107,11 +107,75 @@ func GetData(path string) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func init() {
+`
+
+	save := `// SaveData saves the specified embedded file relative to the specified path.
+func SaveData(path string, data *[]byte) error {
+	var err error
+	base := filepath.Dir(path)
+	if !Exists(base) {
+		err = os.MkdirAll(base, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
+	gz, err := gzip.NewReader(bytes.NewBuffer(*data))
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = f.Close()
+	}()
+
+	var out bytes.Buffer
+	_, err = io.Copy(&out, gz)
+	gzerr := gz.Close()
+	if err != nil {
+		return err
+	}
+
+	if gzerr != nil {
+		return gzerr
+	}
+
+	_, err = f.Write(out.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SaveAllData saves all embedded data, relative to the specified path.
+func SaveAllData(dest string) error {
+	for path, data := range embeddedFiles {
+		out := filepath.Join(dest, path)
+		err := SaveData(out, data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+`
+
+	init := `func init() {
 	embeddedFiles = make(EmbeddedFileList)
 `
 
 	b.WriteString(header)
+	if opts.Save {
+		b.WriteString(save)
+	}
+	b.WriteString(init)
 	for _, v := range list {
 		s := fmt.Sprintf("\tembeddedFiles[\"%s\"] = &%s\n", v.Name, v.Path)
 		b.WriteString(s)

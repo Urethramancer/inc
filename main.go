@@ -14,6 +14,7 @@ var opts struct {
 	Verbose bool   `short:"v" description:"Show progress."`
 	List    string `short:"l" long:"list" description:"Name of a text file listing files to embed, one per line."`
 	Output  string `short:"o" long:"output" description:"Output file name." default:"embed.go"`
+	Save    bool   `short:"s" description:"Include save code in the output."`
 	Args    struct {
 		Files []string `positional-arg-name:"FILE" description:"File to embed."`
 	} `positional-args:"true"`
