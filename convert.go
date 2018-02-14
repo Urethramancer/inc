@@ -83,7 +83,6 @@ func Exists(path string) bool {
 func GetData(path string) ([]byte, error) {
 	p := filepath.Join(basePath, path)
 	if Exists(p) {
-		pr("File exists, loading it instead: %s\n", p)
 		return ioutil.ReadFile(p)
 	}
 
