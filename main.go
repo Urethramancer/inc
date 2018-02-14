@@ -10,12 +10,11 @@ import (
 var Version = "0.0.0"
 
 var opts struct {
-	Info    bool   `short:"V" description:"Show program version and exit."`
-	Verbose bool   `short:"v" description:"Show progress."`
-	List    string `short:"l" long:"list" description:"Name of a text file listing files to embed, one per line."`
-	Output  string `short:"o" long:"output" description:"Output file name." default:"embed.go"`
-	Save    bool   `short:"s" description:"Include save code in the output."`
-	Args    struct {
+	Info   bool   `short:"V" description:"Show program version and exit."`
+	List   string `short:"l" long:"list" description:"Name of a text file listing files to embed, one per line."`
+	Output string `short:"o" long:"output" description:"Output file name." default:"embed.go"`
+	Save   bool   `short:"s" description:"Include save code in the output."`
+	Args   struct {
 		Files []string `positional-arg-name:"FILE" description:"File to embed."`
 	} `positional-args:"true"`
 }
