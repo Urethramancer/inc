@@ -64,22 +64,24 @@ import (
 
 var basePath = ""
 
-// EmbeddedFileList gets the byte slices from original paths.
+// EmbeddedFileList holds the byte slices from original paths.
 type EmbeddedFileList map[string]*[]byte
 
 var embeddedFiles EmbeddedFileList
 
-// SetBasePath sets the path prepended to file paths when checking for actual files.
+// SetBasePath sets the path prepended to file paths when checking for non-embedded files.
 func SetBasePath(path string) {
 	basePath = path
 }
 
+// Exists checks if a file or directory exists.
 func Exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
 
 // GetData decompresses an embedded file.
+// If a physical file exists at basePath+path, load that instead of the embedded file.
 func GetData(path string) ([]byte, error) {
 	p := filepath.Join(basePath, path)
 	if Exists(p) {
