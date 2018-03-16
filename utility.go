@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -44,8 +45,6 @@ func saveString(s, path string) error {
 }
 
 func mangleName(name string) string {
-	s := strings.Replace(name, ".", "", -1)
-	s = strings.Replace(s, "_", "", -1)
-	s = strings.Replace(s, "/", "", -1)
-	return s
+	r, _ := regexp.Compile("[^0-9a-zA-Z]+")
+	return r.ReplaceAllString(name, "")
 }
