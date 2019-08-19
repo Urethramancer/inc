@@ -10,4 +10,4 @@ cache:
     - $GOPATH/pkg
 
 install:
-  - go get github.com/jessevdk/go-flags
+  - go get github.com/Urethramancer/signor
