@@ -4,4 +4,4 @@ if [ -z $VER ]
 then
 	VER="v0.0.0"
 fi
-go build -ldflags "-w -s -X main.Version=$VER"
+go build -ldflags "-w -s -X main.version=$VER"
