@@ -3,37 +3,36 @@ package main
 import (
 	"sort"
 
-	flags "github.com/jessevdk/go-flags"
+	"github.com/Urethramancer/signor/opt"
 )
 
-// Version is filled in from Git tags by the build script.
-var Version = "0.0.0"
+// version is filled in from Git tags by build scripts.
+var version = "undefined"
 
 var opts struct {
-	Info   bool   `short:"V" description:"Show program version and exit."`
-	List   string `short:"l" long:"list" description:"Name of a text file listing files to embed, one per line."`
-	Output string `short:"o" long:"output" description:"Output file name." default:"embed.go"`
-	Save   bool   `short:"s" description:"Include save code in the output."`
-	Args   struct {
-		Files []string `positional-arg-name:"FILE" description:"File to embed."`
-	} `positional-args:"true"`
+	opt.DefaultHelp
+	Version bool     `short:"V" help:"Show program version and exit."`
+	List    string   `short:"l" long:"list" help:"Name of a text file listing files to embed, one per line."`
+	Output  string   `short:"o" long:"output" help:"Output file name." default:"embed.go"`
+	Save    bool     `short:"s" help:"Include save code in the output."`
+	Files   []string `placeholder:"FILE" help:"File to embed."`
 }
 
 func main() {
-	var err error
-	_, err = flags.Parse(&opts)
-	if err != nil {
+	a := opt.Parse(&opts)
+	if opts.Help {
+		a.Usage()
 		return
 	}
 
-	if opts.Info {
-		pr("inc %s\n", Version)
+	if opts.Version {
+		pr("inc %s\n", version)
 		return
 	}
 
 	var list []string
-
-	list = append(list, opts.Args.Files...)
+	var err error
+	list = append(list, opts.Files...)
 
 	if opts.List != "" {
 		var l []string
