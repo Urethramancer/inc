@@ -147,11 +147,7 @@ func SaveData(path string, data *[]byte) error {
 	}
 
 	_, err = f.Write(out.Bytes())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SaveAllData saves all embedded data, relative to the specified path.
