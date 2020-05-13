@@ -44,6 +44,7 @@ func saveString(s, path string) error {
 	return err
 }
 
+// mangleName turns a file name into alphanumerics only.
 func mangleName(name string) string {
 	r, _ := regexp.Compile("[^0-9a-zA-Z]+")
 	return r.ReplaceAllString(name, "")

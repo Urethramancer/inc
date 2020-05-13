@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 type incFile struct {
@@ -27,164 +29,53 @@ func Convert(content []byte, name string) ([]byte, error) {
 }
 
 // ConvertFiles takes a list of files and runs Convert() on each file.
-func ConvertFiles(files []string) (string, error) {
-	var list []incFile
-	for _, path := range files {
+func ConvertFiles(filelist []string) ([]*incFile, error) {
+	var list []*incFile
+	for _, path := range filelist {
+		fi, err := os.Stat(path)
+		if err != nil {
+			pr("Error getting info about '%s': %s", path, err.Error())
+			continue
+		}
+
+		if fi.IsDir() {
+			filist, err := ioutil.ReadDir(path)
+			if err == nil {
+				l := []string{}
+				for _, x := range filist {
+					fn := filepath.Join(path, x.Name())
+					l = append(l, fn)
+				}
+				convlist, err := ConvertFiles(l)
+				if err != nil {
+					pr("Couldn't convert files in directory '%s': %s", path, err.Error())
+					continue
+				}
+
+				list = append(list, convlist...)
+			}
+			continue
+		}
+
 		name := mangleName(path)
 		in, err := ioutil.ReadFile(path)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		gz, err := Compress(in)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		out, err := Convert(gz, name)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		file := incFile{path, name, out}
-		list = append(list, file)
+		list = append(list, &file)
 	}
 
-	var b bytes.Buffer
-	header := `package main
-
-import (
-	"bytes"
-	"compress/gzip"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-)
-
-var basePath = ""
-
-// EmbeddedFileList holds the byte slices from original paths.
-type EmbeddedFileList map[string]*[]byte
-
-var embeddedFiles EmbeddedFileList
-
-// SetBasePath sets the path prepended to file paths when checking for non-embedded files.
-func SetBasePath(path string) {
-	basePath = path
-}
-
-// Exists checks if a file or directory exists.
-func Exists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-// GetData decompresses an embedded file.
-// If a physical file exists at basePath+path, load that instead of the embedded file.
-func GetData(path string) ([]byte, error) {
-	p := filepath.Join(basePath, path)
-	if Exists(p) {
-		return ioutil.ReadFile(p)
-	}
-
-	in := embeddedFiles[path]
-	gz, err := gzip.NewReader(bytes.NewBuffer(*in))
-	if err != nil {
-		return nil, err
-	}
-
-	var out bytes.Buffer
-	_, err = io.Copy(&out, gz)
-	err2 := gz.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	if err2 != nil {
-		return nil, err2
-	}
-
-	return out.Bytes(), nil
-}
-
-`
-
-	save := `// SaveData saves the specified embedded file relative to the specified path.
-func SaveData(path string, data *[]byte) error {
-	var err error
-	base := filepath.Dir(path)
-	if !Exists(base) {
-		err = os.MkdirAll(base, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	gz, err := gzip.NewReader(bytes.NewBuffer(*data))
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = f.Close()
-	}()
-
-	var out bytes.Buffer
-	_, err = io.Copy(&out, gz)
-	gzerr := gz.Close()
-	if err != nil {
-		return err
-	}
-
-	if gzerr != nil {
-		return gzerr
-	}
-
-	_, err = f.Write(out.Bytes())
-	return err
-}
-
-// SaveAllData saves all embedded data, relative to the specified path.
-func SaveAllData(dest string) error {
-	for path, data := range embeddedFiles {
-		out := filepath.Join(dest, path)
-		err := SaveData(out, data)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-`
-
-	init := `func init() {
-	embeddedFiles = make(EmbeddedFileList)
-`
-
-	b.WriteString(header)
-	if opts.Save {
-		b.WriteString(save)
-	}
-	b.WriteString(init)
-	for _, v := range list {
-		s := fmt.Sprintf("\tembeddedFiles[\"%s\"] = &%s\n", v.Name, v.Path)
-		b.WriteString(s)
-	}
-	b.WriteString("}\n\n")
-
-	for _, f := range list {
-		_, err := b.Write(f.Data)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return b.String(), nil
+	return list, nil
 }
