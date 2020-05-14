@@ -24,12 +24,12 @@ var opts struct {
 func main() {
 	a := opt.Parse(&opts)
 	if opts.Help || opts.Files == nil {
-		a.Usage()
-		return
-	}
+		if opts.Version {
+			pr("inc %s\n", version)
+			return
+		}
 
-	if opts.Version {
-		pr("inc %s\n", version)
+		a.Usage()
 		return
 	}
 
