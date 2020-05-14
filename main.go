@@ -91,6 +91,7 @@ const (
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -117,13 +118,13 @@ func Exists(path string) bool {
 
 // GetData decompresses an embedded file.
 // If a physical file exists at basePath+path, load that instead of the embedded file.
-func GetData(path string) ([]byte, error) {
-	p := filepath.Join(basePath, path)
+func GetData(fn string) ([]byte, error) {
+	p := filepath.Join(basePath, fn)
 	if Exists(p) {
 		return ioutil.ReadFile(p)
 	}
 
-	in := embeddedFiles[path]
+	in := embeddedFiles[fn]
 	gz, err := gzip.NewReader(bytes.NewBuffer(*in))
 	if err != nil {
 		return nil, err
@@ -146,9 +147,14 @@ func GetData(path string) ([]byte, error) {
 	`
 
 	save = `// SaveData saves the specified embedded file relative to the specified path.
-func SaveData(path string, data *[]byte) error {
+func SaveData(fn string) error {
+	data, ok := embeddedFiles[fn]
+	if !ok {
+		return fmt.Errorf("unknown embedded file %s", fn)
+	}
+
 	var err error
-	base := filepath.Dir(path)
+	base := filepath.Dir(fn)
 	if !Exists(base) {
 		err = os.MkdirAll(base, 0755)
 		if err != nil {
@@ -161,35 +167,26 @@ func SaveData(path string, data *[]byte) error {
 		return err
 	}
 
-	f, err := os.Create(path)
+	f, err := os.Create(fn)
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		_ = f.Close()
-	}()
-
-	var out bytes.Buffer
-	_, err = io.Copy(&out, gz)
+	defer f.Close()
+	_, err = io.Copy(f, gz)
 	gzerr := gz.Close()
 	if err != nil {
 		return err
 	}
 
-	if gzerr != nil {
-		return gzerr
-	}
-
-	_, err = f.Write(out.Bytes())
-	return err
+	return gzerr
 }
 
-// SaveAllData saves all embedded data, relative to the specified path.
-func SaveAllData(dest string) error {
-	for path, data := range embeddedFiles {
-		out := filepath.Join(dest, path)
-		err := SaveData(out, data)
+// SaveAllData saves all embedded data, relative to the configured base path.
+func SaveAllData() error {
+	for fn := range embeddedFiles {
+		out := filepath.Join(basePath, fn)
+		err := SaveData(out)
 		if err != nil {
 			return err
 		}
@@ -199,7 +196,8 @@ func SaveAllData(dest string) error {
 
 `
 
-	initfunc = `func init() {
+	initfunc = `// init builds the list of embedded files.
+func init() {
 	embeddedFiles = make(EmbeddedFileList)
 `
 )
