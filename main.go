@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/Urethramancer/signor/opt"
 )
@@ -58,9 +59,12 @@ func main() {
 	}
 
 	var b bytes.Buffer
-	b.WriteString(header)
 	if opts.Save {
+		b.WriteString(header)
 		b.WriteString(save)
+	} else {
+		header = strings.Replace(header, fmtheader, "", 1)
+		b.WriteString(header)
 	}
 
 	b.WriteString(initfunc)
@@ -85,7 +89,9 @@ func main() {
 	}
 }
 
-const (
+var (
+	fmtheader = `	"fmt"
+`
 	header = `package main
 
 import (
