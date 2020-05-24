@@ -18,7 +18,8 @@ var opts struct {
 	Version bool     `short:"V" help:"Show program version and exit."`
 	List    string   `short:"l" long:"list" help:"Name of a text file listing files to embed, one per line."`
 	Output  string   `short:"o" long:"output" help:"Output file name." default:"embed.go"`
-	Save    bool     `short:"s" help:"Include save code in the output."`
+	Save    bool     `short:"s" long:"save" help:"Include save code in the output."`
+	Brotli  bool     `short:"b" long:"brotli" help:"Use Brotli compression instead of gzip."`
 	Files   []string `placeholder:"PATH" help:"File or directory to embed."`
 }
 
@@ -51,6 +52,7 @@ func main() {
 	if len(list) == 0 {
 		return
 	}
+
 	sort.Strings(list)
 	convlist, err := ConvertFiles(list)
 	if err != nil {
@@ -59,12 +61,22 @@ func main() {
 	}
 
 	var b bytes.Buffer
+	if opts.Brotli {
+		header = strings.Replace(header, "compress/gzip", "github.com/andybalholm/brotli", 1)
+	}
+
 	if opts.Save {
 		b.WriteString(header)
 		b.WriteString(save)
 	} else {
 		header = strings.Replace(header, fmtheader, "", 1)
 		b.WriteString(header)
+	}
+
+	if opts.Brotli {
+		b.WriteString(brotlidec)
+	} else {
+		b.WriteString(gzipdec)
 	}
 
 	b.WriteString(initfunc)
@@ -121,8 +133,8 @@ func Exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
-
-// GetData decompresses an embedded file.
+`
+	gzipdec = `// GetData decompresses an embedded gzip file.
 // If a physical file exists at basePath+path, load that instead of the embedded file.
 func GetData(fn string) ([]byte, error) {
 	p := filepath.Join(basePath, fn)
@@ -130,7 +142,11 @@ func GetData(fn string) ([]byte, error) {
 		return ioutil.ReadFile(p)
 	}
 
-	in := embeddedFiles[fn]
+	in, ok := embeddedFiles[fn]
+	if !ok {
+		return nil, os.ErrNotExist
+	}
+
 	gz, err := gzip.NewReader(bytes.NewBuffer(*in))
 	if err != nil {
 		return nil, err
@@ -150,6 +166,35 @@ func GetData(fn string) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+	`
+
+	brotlidec = `// GetData decompresses an embedded gzip file.
+// If a physical file exists at basePath+path, load that instead of the embedded file.
+func GetData(fn string) ([]byte, error) {
+	p := filepath.Join(basePath, fn)
+	if Exists(p) {
+		return ioutil.ReadFile(p)
+	}
+	
+	in, ok := embeddedFiles[fn]
+	if !ok {
+		return nil, os.ErrNotExist
+	}
+	
+	br := brotli.NewReader(bytes.NewBuffer(*in))
+	if br == nil {
+		return nil, io.ErrUnexpectedEOF
+	}
+	
+	var out bytes.Buffer
+	_, err := io.Copy(&out, br)
+	if err != nil {
+		return nil, err
+	}
+	
+	return out.Bytes(), nil
+}
+	
 	`
 
 	save = `// SaveData saves the specified embedded file relative to the specified path.
