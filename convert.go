@@ -8,7 +8,8 @@ import (
 	"path/filepath"
 )
 
-type incFile struct {
+// IncFile is a file to include-
+type IncFile struct {
 	Name string
 	Path string
 	Data []byte
@@ -29,13 +30,12 @@ func Convert(content []byte, name string) ([]byte, error) {
 }
 
 // ConvertFiles takes a list of files and runs Convert() on each file.
-func ConvertFiles(filelist []string) ([]*incFile, error) {
-	var list []*incFile
+func ConvertFiles(filelist []string) ([]*IncFile, error) {
+	var list []*IncFile
 	for _, path := range filelist {
 		fi, err := os.Stat(path)
 		if err != nil {
-			pr("Error getting info about '%s': %s", path, err.Error())
-			continue
+			return nil, err
 		}
 
 		if fi.IsDir() {
@@ -73,7 +73,7 @@ func ConvertFiles(filelist []string) ([]*incFile, error) {
 			return nil, err
 		}
 
-		file := incFile{path, name, out}
+		file := IncFile{path, name, out}
 		list = append(list, &file)
 	}
 

@@ -25,7 +25,7 @@ var opts struct {
 
 func main() {
 	a := opt.Parse(&opts)
-	if opts.Help || opts.Files == nil {
+	if opts.Help || (opts.Files == nil && opts.List == "") {
 		if opts.Version {
 			pr("inc %s\n", version)
 			return
