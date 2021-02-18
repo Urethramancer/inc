@@ -1,4 +1,7 @@
-github.com/Urethramancer/signor v0.10.2 h1:Re02wGIJMtrpAUS9t9TvMkjx++ST2LtNHBI7+0w6Xvs=
-github.com/Urethramancer/signor v0.10.2/go.mod h1:DORKrGOeJ735IqsyRFgGKpE5miMDmMhkK/iQAoaVF4g=
+github.com/Urethramancer/cross v0.5.1/go.mod h1:fDdlBbOHyb78KkGBNSM3auQbWBtLt0QzcmKytctpe9c=
+github.com/Urethramancer/daemon v0.3.0/go.mod h1:/T1hacQ495iR95N1l6qtceUY2i6gtcEwcemi6WGJ0n8=
+github.com/Urethramancer/signor v0.10.3 h1:wcFS08R9vNbI9aib3ZxOblopEOegUYhZ2fUNnjdzFlQ=
+github.com/Urethramancer/signor v0.10.3/go.mod h1:A8scGHYye/A3YEL8kasLWcfDHSQSZhQKgWHLaabqJfI=
 github.com/andybalholm/brotli v1.0.1 h1:KqhlKozYbRtJvsPrrEeXcO+N2l6NYT5A2QAFmSULpEc=
 github.com/andybalholm/brotli v1.0.1/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
+github.com/mgutz/str v1.2.0/go.mod h1:w1v0ofgLaJdoD0HpQ3fycxKD1WtxpjSo151pK/31q6w=
