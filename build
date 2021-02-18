@@ -1,5 +1,5 @@
 #!/bin/bash
-VER=`git describe --tags master --abbrev=0`
+VER=`git describe --tags main --abbrev=0`
 if [ -z $VER ]
 then
 	VER="v0.0.0"
